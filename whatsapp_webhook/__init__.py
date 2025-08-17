@@ -149,55 +149,98 @@ def notify_owner(phone_number_id: str, booking: dict):
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Webhook JC Eng + HSM acionado.")
+
+    # GET: verificação do webhook
     if req.method == "GET":
         mode = req.params.get("hub.mode")
         token = req.params.get("hub.verify_token")
         challenge = req.params.get("hub.challenge")
+        logging.info(f"GET recebido: mode={mode}, token={token}, challenge={challenge}")
         if mode == "subscribe" and token == VERIFY_TOKEN and challenge:
             return func.HttpResponse(challenge, status_code=200)
         return func.HttpResponse("Verificação inválida", status_code=403)
 
+    # POST: eventos do WhatsApp
     if req.method == "POST":
         try:
             data = req.get_json()
-        except ValueError:
+        except ValueError as ve:
+            logging.error("POST recebido com JSON inválido: %s", ve)
             return func.HttpResponse("JSON inválido", status_code=400)
 
+        # Proteção contra estrutura inesperada
         try:
-            changes = data.get("entry", [])[0].get("changes", [])[0]
-            value = changes.get("value", {})
+            entry = (data.get("entry") or [])
+            if not entry:
+                logging.warning("Evento recebido sem entry: %s", data)
+                return func.HttpResponse("OK", status_code=200)
+
+            changes = (entry[0].get("changes") or [])
+            if not changes:
+                logging.warning("Evento recebido sem changes: %s", data)
+                return func.HttpResponse("OK", status_code=200)
+
+            value = changes[0].get("value", {})
             phone_number_id = value.get("metadata", {}).get("phone_number_id")
             messages = value.get("messages", [])
             if not messages:
+                logging.info("Evento sem mensagens (provavelmente delivery/read): %s", data)
                 return func.HttpResponse("OK", status_code=200)
+
             msg = messages[0]
             from_ = msg.get("from")
-
             if msg.get("type") == "text":
                 user_text = msg["text"]["body"]
             else:
                 user_text = "Olá! Sou a assistente do Eng. Jacivaldo. Pode enviar sua mensagem em texto? 🙂"
 
+        except Exception as parse_err:
+            logging.exception("Erro ao processar estrutura do WhatsApp: %s", parse_err)
+            return func.HttpResponse("Erro no parsing do evento", status_code=500)
+
+        # Extração de informações via Azure OpenAI
+        try:
             extracted = call_extract(user_text)
-            intent = extracted.get("intent","unknown")
+            intent = extracted.get("intent", "unknown")
+        except Exception as extract_err:
+            logging.exception("Erro na extração via OpenAI: %s", extract_err)
+            extracted = {"intent":"unknown","nome":"","servico":"","categoria":"","data":"","horario":"","contato":"","observacoes":""}
+            intent = "unknown"
 
-            if intent == "handoff":
-                notify_owner(phone_number_id, {"nome": extracted.get("nome","(sem nome)"),
-                                               "servico": extracted.get("servico","(sem serviço)"),
-                                               "categoria": extracted.get("categoria",""),
-                                               "data": extracted.get("data",""), "horario": extracted.get("horario",""),
-                                               "contato": extracted.get("contato",""), "observacoes": extracted.get("observacoes","Pedido de humano")})
-                send_whatsapp_text(phone_number_id, from_, "Claro! Vou te conectar com o Eng. Jacivaldo. Ele já foi notificado e falará com você por aqui 💬.")
+        # Handoff para humano
+        if intent == "handoff":
+            try:
+                notify_owner(phone_number_id, {
+                    "nome": extracted.get("nome","(sem nome)"),
+                    "servico": extracted.get("servico","(sem serviço)"),
+                    "categoria": extracted.get("categoria",""),
+                    "data": extracted.get("data",""),
+                    "horario": extracted.get("horario",""),
+                    "contato": extracted.get("contato",""),
+                    "observacoes": extracted.get("observacoes","Pedido de humano")
+                })
+                send_whatsapp_text(phone_number_id, from_, 
+                                   "Claro! Vou te conectar com o Eng. Jacivaldo. Ele já foi notificado e falará com você por aqui 💬.")
                 return func.HttpResponse("EVENT_RECEIVED", status_code=200)
+            except Exception as handoff_err:
+                logging.exception("Erro ao notificar humano: %s", handoff_err)
 
-            if intent == "schedule" and not missing_fields(extracted):
+        # Agendamento
+        if intent == "schedule" and not missing_fields(extracted):
+            try:
                 save_booking(from_, {**extracted, "id": msg.get("id")}, phone_number_id)
-                send_whatsapp_text(phone_number_id, from_, "✅ Agendamento registrado! Você receberá lembretes automáticos antes do horário. Qualquer ajuste é só avisar por aqui.")
+                send_whatsapp_text(phone_number_id, from_, 
+                                   "✅ Agendamento registrado! Você receberá lembretes automáticos antes do horário. Qualquer ajuste é só avisar por aqui.")
                 send_whatsapp_template(phone_number_id, from_, "confirmacao_agendamento_jceng",
                                        parameters=[extracted.get("nome",""), extracted.get("servico",""),
                                                    extracted.get("data",""), extracted.get("horario","")])
                 notify_owner(phone_number_id, extracted)
-            else:
+            except Exception as schedule_err:
+                logging.exception("Erro ao processar agendamento: %s", schedule_err)
+                send_whatsapp_text(phone_number_id, from_, "Ocorreu um erro ao registrar seu agendamento. Por favor, tente novamente mais tarde.")
+        else:
+            # Pedir campos faltantes
+            try:
                 need = missing_fields(extracted)
                 if need:
                     labels = {
@@ -211,11 +254,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     itens = ", ".join(labels[n] for n in need)
                     send_whatsapp_text(phone_number_id, from_, f"✨ Perfeito! Para concluir seu agendamento, me informe: {itens}.")
                 else:
-                    send_whatsapp_text(phone_number_id, from_, "Posso te ajudar a escolher um serviço? Também posso verificar disponibilidade para uma data/horário específicos 🙂.")
-
-        except Exception as e:
-            logging.exception("Erro webhook: %s", e)
-            return func.HttpResponse("Erro", status_code=500)
+                    send_whatsapp_text(phone_number_id, from_, 
+                                       "Posso te ajudar a escolher um serviço? Também posso verificar disponibilidade para uma data/horário específicos 🙂.")
+            except Exception as reply_err:
+                logging.exception("Erro ao enviar resposta ao usuário: %s", reply_err)
 
         return func.HttpResponse("EVENT_RECEIVED", status_code=200)
 
