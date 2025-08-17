@@ -1,0 +1,65 @@
+{
+  "brand": "Engenheiro Jacivaldo Carvalho",
+  "categories": [
+    {
+      "name": "Web & Aplicações",
+      "description": "Sites profissionais, landing pages e integrações.",
+      "services": [
+        "Desenvolvimento de Websites",
+        "Landing Pages de Alta Conversão",
+        "Integração com Formulários/CRM",
+        "SEO e Performance"
+      ]
+    },
+    {
+      "name": "Soluções em IA",
+      "description": "Chatbots, automação e análise inteligente.",
+      "services": [
+        "Chatbots e Assistentes",
+        "Fluxos com IA para WhatsApp",
+        "Resumo e Classificação de Documentos",
+        "Extração de Dados com IA"
+      ]
+    },
+    {
+      "name": "Nuvem & DevOps",
+      "description": "Arquitetura Azure, CI/CD e observabilidade.",
+      "services": [
+        "Arquitetura em Azure",
+        "Pipelines CI/CD / IaC",
+        "Monitoramento e Observabilidade",
+        "Otimização de Custos"
+      ]
+    },
+    {
+      "name": "Telecom – Redes & Fibra",
+      "description": "Projetos e melhoria de infraestrutura.",
+      "services": [
+        "Fibra Óptica (projeto/testes)",
+        "Cabeamento Estruturado",
+        "Redes Wireless (planejamento/tuning)",
+        "QoS e Performance de Rede"
+      ]
+    },
+    {
+      "name": "Documentação & Melhoria",
+      "description": "Relatórios técnicos e planos de ação.",
+      "services": [
+        "Relatórios e Pós-incidente",
+        "Manuais e Runbooks",
+        "Mapeamento de Processos",
+        "Planos de Melhoria"
+      ]
+    },
+    {
+      "name": "Consultoria em TI",
+      "description": "Avaliação, roadmap e fornecedores.",
+      "services": [
+        "Diagnóstico de TI",
+        "Roadmap e Governança Leve",
+        "Treinamentos Rápidos",
+        "Apoio na Seleção de Fornecedores"
+      ]
+    }
+  ]
+}

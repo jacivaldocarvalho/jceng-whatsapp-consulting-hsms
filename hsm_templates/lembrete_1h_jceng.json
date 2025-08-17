@@ -1,0 +1,11 @@
+{
+  "name": "lembrete_1h_jceng",
+  "language": "pt_BR",
+  "category": "UTILITY",
+  "components": [
+    {
+      "type": "BODY",
+      "text": "✨ Olá {{1}}, falta 1 hora para o seu atendimento de *{{2}}*. Estamos aguardando você!"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "confirmacao_agendamento_jceng",
+  "language": "pt_BR",
+  "category": "UTILITY",
+  "components": [
+    {
+      "type": "BODY",
+      "text": "✅ Olá {{1}}, confirmamos seu agendamento de *{{2}}* para *{{3}} às {{4}}*. Qualquer ajuste é só responder por aqui."
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "lembrete_24h_jceng",
+  "language": "pt_BR",
+  "category": "UTILITY",
+  "components": [
+    {
+      "type": "BODY",
+      "text": "⏰ Olá {{1}}, lembrando que amanhã você tem um agendamento de *{{2}}* às *{{3}}* com o Eng. Jacivaldo. Até breve!"
+    }
+  ]
+}

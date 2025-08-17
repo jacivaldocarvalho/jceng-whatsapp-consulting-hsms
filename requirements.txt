@@ -1,0 +1,5 @@
+azure-functions
+requests
+openai>=1.40.0
+azure-data-tables>=12.5.0
+# sendgrid>=6.10.0  # opcional para e-mail

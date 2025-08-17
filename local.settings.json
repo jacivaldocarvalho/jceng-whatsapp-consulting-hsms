@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AZURE_OPENAI_ENDPOINT": "https://<seu-recurso-aoai>.openai.azure.com/",
+    "AZURE_OPENAI_API_KEY": "<sua-chave-aoai>",
+    "AZURE_OPENAI_DEPLOYMENT": "gpt-4o-mini",
+    "WHATSAPP_TOKEN": "<token-graph-meta>",
+    "VERIFY_TOKEN": "verificacao-jceng-123",
+    "OWNER_WHATSAPP": "<55SEUNUMERO>",
+    "OWNER_NAME": "Eng. Jacivaldo Carvalho",
+    "LOCAL_UTC_OFFSET": "-03:00"
+  }
+}
